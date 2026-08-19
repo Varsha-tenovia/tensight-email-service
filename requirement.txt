@@ -1,0 +1,9 @@
+psycopg2-binary
+python-dotenv
+croniter
+pandas
+duckdb
+pyathena
+boto3
+reportlab
+requests
