@@ -7,11 +7,20 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
-def get_connection():
-    if not DATABASE_URL:
-        raise Exception("DATABASE_URL is not configured")
+# ============================================
+# DATABASE CONNECTION
+# ============================================
 
-    return psycopg2.connect(DATABASE_URL)
+def get_connection():
+
+    if not DATABASE_URL:
+        raise Exception(
+            "DATABASE_URL is not configured"
+        )
+
+    return psycopg2.connect(
+        DATABASE_URL
+    )
 
 
 # ============================================
@@ -24,6 +33,7 @@ def get_due_reports():
     cursor = None
 
     try:
+
         connection = get_connection()
         cursor = connection.cursor()
 
@@ -53,7 +63,8 @@ def get_due_reports():
                 r.last_started_at,
                 r.retry_count,
                 r.max_retries,
-                r.last_error
+                r.last_error,
+                r.brands
             FROM reports r
             JOIN clients c
                 ON r.client_id = c.id
@@ -71,7 +82,10 @@ def get_due_reports():
         reports = cursor.fetchall()
 
         # Convert rows to dictionaries
-        columns = [desc[0] for desc in cursor.description]
+        columns = [
+            desc[0]
+            for desc in cursor.description
+        ]
 
         reports = [
             dict(zip(columns, row))
@@ -87,7 +101,10 @@ def get_due_reports():
         if connection:
             connection.rollback()
 
-        print("Error getting due reports:", error)
+        print(
+            "Error getting due reports:",
+            error
+        )
 
         return []
 
@@ -121,11 +138,15 @@ def mark_report_running(report_id):
                 last_started_at = NOW(),
                 updated_at = NOW()
             WHERE id = %s;
-        """, (report_id,))
+        """, (
+            report_id,
+        ))
 
         connection.commit()
 
-        print(f"Report {report_id} marked RUNNING")
+        print(
+            f"Report {report_id} marked RUNNING"
+        )
 
     except Exception as error:
 
@@ -144,7 +165,7 @@ def mark_report_running(report_id):
 
 
 # ============================================
-# MARK REPORT SUCCESS
+# MARK REPORT AS SUCCESS
 # ============================================
 
 def mark_report_success(
@@ -199,7 +220,7 @@ def mark_report_success(
 
 
 # ============================================
-# MARK REPORT FAILURE
+# MARK REPORT AS FAILURE
 # ============================================
 
 def mark_report_failure(
