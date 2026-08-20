@@ -1,5 +1,7 @@
 import os
 import json
+import traceback
+
 from datetime import datetime, timezone
 
 from database import (
@@ -42,6 +44,7 @@ def get_report_brands(report):
     if isinstance(brands, str):
 
         try:
+
             brands = json.loads(brands)
 
         except json.JSONDecodeError:
@@ -60,6 +63,7 @@ def get_report_brands(report):
     # ----------------------------------------
 
     if not isinstance(brands, list):
+
         raise Exception(
             "Invalid brands configuration. "
             "Expected a list."
@@ -184,39 +188,51 @@ def process_report(report):
     brands = get_report_brands(report)
 
     print("\n===================================")
+
     print(
         f"Processing Report ID: {report_id}"
     )
+
     print(
         f"Client: {client_name}"
     )
+
     print(
         f"Report: {report_name}"
     )
+
     print(
         f"Data Source: {data_source}"
     )
+
     print(
         f"Format: {report_format}"
     )
 
     if brands:
+
         print(
             f"Brands: {brands}"
         )
 
-    print("===================================\n")
+    print(
+        "===================================\n"
+    )
 
     generated_files = []
 
     try:
 
-        # ------------------------------------
+        # ====================================
         # Mark RUNNING
-        # ------------------------------------
+        # ====================================
 
         mark_report_running(
             report_id
+        )
+
+        print(
+            f"Report {report_id} marked RUNNING"
         )
 
         # ====================================
@@ -226,7 +242,7 @@ def process_report(report):
         if brands:
 
             print(
-                f"Multi-brand report detected."
+                "Multi-brand report detected."
             )
 
             print(
@@ -235,11 +251,17 @@ def process_report(report):
 
             for brand in brands:
 
-                print("\n-----------------------------------")
+                print(
+                    "\n-----------------------------------"
+                )
+
                 print(
                     f"Processing brand: {brand}"
                 )
-                print("-----------------------------------")
+
+                print(
+                    "-----------------------------------"
+                )
 
                 # --------------------------------
                 # Replace {brand}
@@ -319,7 +341,7 @@ def process_report(report):
             )
 
             # --------------------------------
-            # Existing behaviour
+            # Execute query
             # --------------------------------
 
             dataframe = execute_report_query(
@@ -385,7 +407,10 @@ def process_report(report):
                 "No report files were generated."
             )
 
-        print("\n-----------------------------------")
+        print(
+            "\n-----------------------------------"
+        )
+
         print(
             f"Generated files: "
             f"{len(generated_files)}"
@@ -397,7 +422,9 @@ def process_report(report):
                 f" - {file_path}"
             )
 
-        print("-----------------------------------")
+        print(
+            "-----------------------------------"
+        )
 
         # ====================================
         # SEND EMAIL
@@ -424,20 +451,14 @@ def process_report(report):
                     f"- {brand}\n"
                 )
 
-            body += (
-                f"\nRegards,\n"
-                f"Reporting System"
-            )
 
         else:
 
-            body = (
+             body = (
                 f"Hi,\n\n"
                 f"Please find attached the "
                 f"{report_name} for "
-                f"{client_name}.\n\n"
-                f"Regards,\n"
-                f"Reporting System"
+                f"{client_name}."
             )
 
         send_email(
@@ -480,22 +501,73 @@ def process_report(report):
 
     except Exception as error:
 
+        # ====================================
+        # DETAILED ERROR LOGGING
+        # ====================================
+
         print(
             f"\nReport {report_id} failed:"
         )
 
-        print(error)
+        print(
+            f"Exception type: "
+            f"{type(error).__name__}"
+        )
+
+        print(
+            f"Exception repr: "
+            f"{repr(error)}"
+        )
+
+        print(
+            f"Exception string: "
+            f"{str(error)}"
+        )
+
+        print(
+            "\n========== FULL TRACEBACK =========="
+        )
+
+        traceback.print_exc()
+
+        print(
+            "====================================\n"
+        )
 
         # ====================================
         # MARK FAILURE
         # ====================================
 
-        mark_report_failure(
-            report_id=report_id,
-            retry_count=retry_count,
-            max_retries=max_retries,
-            error_message=str(error)
-        )
+        try:
+
+            mark_report_failure(
+                report_id=report_id,
+                retry_count=retry_count,
+                max_retries=max_retries,
+                error_message=(
+                    f"{type(error).__name__}: "
+                    f"{str(error)}"
+                )
+            )
+
+        except Exception as failure_error:
+
+            print(
+                "\nFailed to update report "
+                "failure status:"
+            )
+
+            print(
+                f"Exception type: "
+                f"{type(failure_error).__name__}"
+            )
+
+            print(
+                f"Exception repr: "
+                f"{repr(failure_error)}"
+            )
+
+            traceback.print_exc()
 
     finally:
 
@@ -535,8 +607,13 @@ def process_report(report):
 
 def run_reports():
 
-    print("\n===================================")
-    print("REPORT RUNNER STARTED")
+    print(
+        "\n==================================="
+    )
+
+    print(
+        "REPORT RUNNER STARTED"
+    )
 
     print(
         datetime.now(
@@ -544,7 +621,9 @@ def run_reports():
         )
     )
 
-    print("===================================\n")
+    print(
+        "===================================\n"
+    )
 
     reports = get_due_reports()
 
@@ -562,8 +641,18 @@ def run_reports():
 
     for report in reports:
 
-        process_report(report)
+        process_report(
+            report
+        )
 
-    print("\n===================================")
-    print("REPORT RUNNER FINISHED")
-    print("===================================\n")
+    print(
+        "\n==================================="
+    )
+
+    print(
+        "REPORT RUNNER FINISHED"
+    )
+
+    print(
+        "===================================\n"
+    )

@@ -48,7 +48,6 @@ def send_email(
     body = f"""{body}
 
 Regards,
-Reporting System
 Tensight Reports
 """
 
