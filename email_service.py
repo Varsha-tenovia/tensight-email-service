@@ -9,7 +9,6 @@ def send_email(
     body,
     attachment_paths
 ):
-
     resend_api_key = os.getenv(
         "RESEND_API_KEY"
     )
@@ -17,6 +16,10 @@ def send_email(
     from_email = os.getenv(
         "REPORT_FROM_EMAIL"
     )
+
+    # ============================================
+    # VALIDATION
+    # ============================================
 
     if not resend_api_key:
         raise Exception(
@@ -39,6 +42,17 @@ def send_email(
         )
 
     # ============================================
+    # PREPARE EMAIL BODY
+    # ============================================
+
+    body = f"""{body}
+
+Regards,
+Reporting System
+Tensight Reports
+"""
+
+    # ============================================
     # PREPARE ATTACHMENTS
     # ============================================
 
@@ -47,10 +61,8 @@ def send_email(
     for attachment_path in attachment_paths:
 
         if not os.path.exists(attachment_path):
-
             raise Exception(
-                f"Attachment not found: "
-                f"{attachment_path}"
+                f"Attachment not found: {attachment_path}"
             )
 
         with open(
@@ -78,7 +90,7 @@ def send_email(
     # ============================================
 
     payload = {
-        "from": from_email,
+        "from": f"Tensight Reports <{from_email}>",
         "to": recipients,
         "subject": subject,
         "text": body,
@@ -88,17 +100,18 @@ def send_email(
     response = requests.post(
         "https://api.resend.com/emails",
         headers={
-            "Authorization":
-                f"Bearer {resend_api_key}",
-            "Content-Type":
-                "application/json"
+            "Authorization": f"Bearer {resend_api_key}",
+            "Content-Type": "application/json"
         },
         json=payload,
         timeout=60
     )
 
-    if not response.ok:
+    # ============================================
+    # HANDLE RESPONSE
+    # ============================================
 
+    if not response.ok:
         raise Exception(
             f"Email failed: "
             f"{response.status_code} "
@@ -110,9 +123,6 @@ def send_email(
         f"{recipients}"
     )
 
-    print(
-        f"Attachments sent: "
-        f"{len(attachments)}"
-    )
+    
 
     return response.json()
